@@ -1,55 +1,72 @@
 import streamlit as st
-from transformers import pipeline
+from textblob import TextBlob
 
 st.set_page_config(page_title="AI Playground", layout="wide")
-st.header("🤖 AI Playground - Hugging Face")
+st.header("🤖 AI Playground - Sentiment Analysis")
 
-# Cache models to avoid reloading
-@st.cache_resource
-def load_sentiment():
-    return pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
+st.info("Lightweight sentiment analysis using TextBlob. No deep learning models required, fast and memory efficient.")
 
-@st.cache_resource
-def load_summarizer():
-    # t5-small is lightweight (~300MB)
-    return pipeline("summarization", model="t5-small")
+st.markdown("---")
 
-tab1, tab2 = st.tabs(["😊 Sentiment Analysis", "📝 Text Summarization"])
+# Text input
+text = st.text_area("Enter your text here:", height=150, 
+                    placeholder="Example: I love this product! It's absolutely amazing.")
 
-with tab1:
-    st.subheader("Sentiment Analysis")
-    text = st.text_area("Enter your text:", height=120,
-                       placeholder="I love this product! It's amazing.")
-    if st.button("Analyze Sentiment"):
-        if text.strip():
-            with st.spinner("Analyzing..."):
-                pipe = load_sentiment()
-                result = pipe(text)[0]
-                label = result['label']
-                score = result['score']
-                emoji = "😊" if label == "POSITIVE" else "😞"
-                st.metric(f"{emoji} Sentiment", label, f"Confidence: {score:.1%}")
+if st.button("🔍 Analyze Sentiment", type="primary"):
+    if text.strip():
+        # Perform sentiment analysis
+        blob = TextBlob(text)
+        polarity = blob.sentiment.polarity  # Range: -1 (negative) to +1 (positive)
+        subjectivity = blob.sentiment.subjectivity  # Range: 0 (objective) to 1 (subjective)
+        
+        # Determine sentiment label
+        if polarity > 0.1:
+            sentiment = "Positive 😊"
+            color = "green"
+        elif polarity < -0.1:
+            sentiment = "Negative 😞"
+            color = "red"
         else:
-            st.warning("Please enter some text.")
-
-with tab2:
-    st.subheader("Text Summarization")
-    long_text = st.text_area("Paste long article:", height=200,
-                            placeholder="Enter at least 100 characters...")
-    if st.button("Summarize"):
-        if len(long_text) > 50:
-            with st.spinner("Generating summary..."):
-                pipe = load_summarizer()
-                summary = pipe(long_text, max_length=100, min_length=20)[0]
-                st.success("Summary:")
-                st.write(summary['summary_text'])
+            sentiment = "Neutral 😐"
+            color = "gray"
+        
+        # Display results
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Sentiment", sentiment)
+            st.metric("Polarity Score", f"{polarity:.3f}", 
+                      help="Range: -1 (very negative) to +1 (very positive)")
+        with col2:
+            st.metric("Subjectivity", f"{subjectivity:.3f}",
+                      help="Range: 0 (factual/objective) to 1 (personal opinion)")
+        
+        # Visualize polarity as a progress bar
+        st.subheader("Polarity Meter")
+        polarity_normalized = (polarity + 1) / 2  # convert -1..1 to 0..1
+        st.progress(polarity_normalized)
+        st.caption("← Negative | Neutral | Positive →")
+        
+        # Example feedback
+        if polarity > 0.5:
+            st.success("Very positive feedback! 🎉")
+        elif polarity < -0.5:
+            st.error("Very negative feedback. 😔")
+        elif polarity > 0:
+            st.info("Slightly positive tone.")
+        elif polarity < 0:
+            st.warning("Slightly negative tone.")
         else:
-            st.warning("Please enter at least 50 characters.")
+            st.info("Neutral tone.")
+    else:
+        st.warning("Please enter some text to analyze.")
 
-st.sidebar.markdown("""
-**ℹ️ About**
-- Sentiment: `distilbert-base-uncased`
-- Summarization: `t5-small` (lightweight)
-- Models are cached using `@st.cache_resource`
-- Using CPU-only PyTorch for memory efficiency
-""")
+# Sidebar info
+with st.sidebar:
+    st.markdown("### About")
+    st.markdown("""
+    - **Model:** TextBlob (rule-based)
+    - **No external APIs** – runs locally
+    - **Polarity:** -1 (negative) to +1 (positive)
+    - **Subjectivity:** 0 (fact) to 1 (opinion)
+    """)
+    st.caption("Lightweight alternative to Hugging Face models")
