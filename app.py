@@ -8,17 +8,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ========== CUSTOM CSS ==========
+# ========== CUSTOM CSS (Light & Dark mode compatible) ==========
 st.markdown("""
 <style>
-    /* Main background */
-    .stApp {
-        background-color: #f5f7fb;
-    }
-    /* Sidebar styling */
-    .css-1d391kg, .stSidebar {
-        background-color: #e8f0fe;
-    }
     /* Button styling */
     .stButton > button {
         background-color: #4CAF50;
@@ -33,25 +25,36 @@ st.markdown("""
         background-color: #45a049;
         transform: scale(1.02);
     }
-    /* Metric cards */
+    /* Metric value styling */
     div[data-testid="stMetricValue"] {
         font-size: 2rem;
         font-weight: bold;
         color: #1f77b4;
     }
-    /* Expander styling */
+    /* Expander and tabs use Streamlit theme variables */
     .streamlit-expanderHeader {
-        background-color: #ffffff;
+        background-color: var(--secondary-background-color);
         border-radius: 8px;
     }
-    /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 24px;
     }
     .stTabs [data-baseweb="tab"] {
         border-radius: 8px;
         padding: 8px 16px;
-        background-color: #ffffff;
+        background-color: var(--secondary-background-color);
+    }
+    /* Dark mode overrides */
+    @media (prefers-color-scheme: dark) {
+        div[data-testid="stMetricValue"] {
+            color: #66c2ff;
+        }
+        .stButton > button {
+            background-color: #2e7d32;
+        }
+        .stButton > button:hover {
+            background-color: #1b5e20;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -98,7 +101,7 @@ with col2:
 
 st.markdown("---")
 
-# Quick stats (dummy numbers – can be replaced with session state values)
+# Quick stats (these can be connected to session state later)
 col_a, col_b, col_c = st.columns(3)
 col_a.metric("📊 Dataset Size", "200 patients", "+0")
 col_b.metric("🎯 Model Accuracy", "94.5%", "+2.1%")
